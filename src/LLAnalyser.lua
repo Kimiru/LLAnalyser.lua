@@ -274,21 +274,18 @@ function LLAnalyser:getSymboleTokens(input)
         end
         lastIndex = currentIndex
         local result = self:findToken(input, currentIndex)
-        if not result then goto continue_input end
+        if result then
+            line = line + result.lineBreak
+            if result.lineBreak > 0 then column = 1 end
+            column = column + result.column
+            currentIndex = currentIndex + result.length
 
-        line = line + result.lineBreak
-        if result.lineBreak > 0 then column = 1 end
-        column = column + result.column
-        currentIndex = currentIndex + result.length
-
-        if result.symboleToken then
-            result.symboleToken.line = line
-            result.symboleToken.column = column
-            table.insert(tokenList, result.symboleToken)
+            if result.symboleToken then
+                result.symboleToken.line = line
+                result.symboleToken.column = column
+                table.insert(tokenList, result.symboleToken)
+            end
         end
-
-        ::continue_input::
-        -- print(currentIndex, lastIndex)
     end
 
     local eof = SymboleToken:new('EOF')
