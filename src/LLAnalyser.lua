@@ -127,7 +127,10 @@ function Rule.array(...) return {...} end
 function Rule:toString()
     res = self.nonTerminal .. ' -> '
     if (#self.symboles ~= 0) then
-        for k, v in ipairs(self.symboles) do res = res .. v end
+        for k, v in ipairs(self.symboles) do
+            if k ~= 0 then res = res .. ' ' end
+            res = res .. v
+        end
     else
         res = res .. 'epsilon'
     end
@@ -157,15 +160,23 @@ function ASAStep:new(type)
 
 end
 
-function ASAStep:flatten()
+function ASAStep:flatten(log)
+    log = log or false
 
     local args = {}
 
     for i, child in ipairs(self.children) do
-        local flat = child:flatten()
+        local flat = child:flatten(log)
         table.insert(args, flat)
     end
 
+    if log then
+        if self.rule then
+            print('+ ' .. self.rule:toString())
+        else
+            print('+ ' .. self.type)
+        end
+    end
     local res
     if self.rule ~= nil then
         res = self.rule.action(table.unpack(args))
@@ -174,6 +185,15 @@ function ASAStep:flatten()
     end
 
     if res == nil then res = 'nil' end
+
+    if log then
+        print('data:', dump(res))
+        if self.rule then
+            print('+ ' .. self.rule:toString())
+        else
+            print('+ ' .. self.type)
+        end
+    end
 
     return res
 
@@ -471,7 +491,7 @@ function LLAnalyser:parse(input)
             if not rule then
                 error('Unexpected symbole at line ' .. headSymbole.line ..
                           ' column ' .. headSymbole.column .. ': "' ..
-                          headSymbole.value '" while parsing rule for ' ..
+                          headSymbole.value .. '" while parsing rule for ' ..
                           headStack.type)
             end
 
@@ -482,6 +502,12 @@ function LLAnalyser:parse(input)
                 table.insert(headStack.children, 1, asas)
                 table.insert(stack, 1, asas)
 
+            end
+
+            if #rule.symboles == 0 then
+                local asas = ASAStep:new(nil)
+                headStack.rule = rule
+                table.insert(headStack.children, 1, asas)
             end
 
             table.insert(symboleTokens, 1, headSymbole)
