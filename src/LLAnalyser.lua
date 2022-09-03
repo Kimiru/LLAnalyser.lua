@@ -98,7 +98,7 @@ end
 -- type = string
 function SymboleReader.idString(type)
     return SymboleReader:new('[a-zA-Z0-9][_a-zA-Z0-9]*', function(str)
-        return SymboleToken:new(type, tonumber(str))
+        return SymboleToken:new(type, str)
     end)
 end
 
